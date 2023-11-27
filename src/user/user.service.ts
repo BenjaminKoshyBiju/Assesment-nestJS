@@ -4,12 +4,19 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import {User} from './entities/user.entity'
 import { Repository } from 'typeorm';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class UserService {
   constructor(
     @InjectRepository(User) private readonly userRepository: Repository<User>,
   ){}
+
+  async hashPassword(password:string): Promise<string>{
+    const saltRounds=10;
+    return bcrypt.hash(password,saltRounds)
+  }
+
 
   async createUser(createUserDto: CreateUserDto,username:string): Promise<User> {       //registering and creating user then login then all other functions
     const existingUser= await this.userRepository.findOneBy({username});
@@ -21,14 +28,14 @@ export class UserService {
     user.age = createUserDto.age
     user.email = createUserDto.email;
     user.username = createUserDto.username;
-    user.password = createUserDto.password;
+    user.password = await this.hashPassword(createUserDto.password);
     user.gender = createUserDto.gender;
     return this.userRepository.save(user);
   }
 
   async validateUser(createUserDto: CreateUserDto,username:string,password:string): Promise<User> {  //implemented login
-    const user= await this.userRepository.findOneBy({username,password})
-    if (!user || password!=createUserDto.password)
+    const user= await this.userRepository.findOneBy({username})
+    if (!user || await bcrypt.compare(password, createUserDto.password))
     {
       throw new UnauthorizedException('Invalid credentials');
     }
@@ -37,6 +44,7 @@ export class UserService {
   
     return user ;
   }
+  
 
 
   findAllUsers(): Promise<User[]> {

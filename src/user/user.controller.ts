@@ -18,10 +18,7 @@ export class UserController {
     return this.userService.validateUser(createUserDto, createUserDto.username, createUserDto.password);
   }
   
-  // @Post('login') // Example login endpoint
-  // login(@Body() createUserDto: CreateUserDto) {
-  //   return this.authService.login(createUserDto.username, createUserDto.password)
-  // }
+ 
 
   @Get()
   findAll() { 
